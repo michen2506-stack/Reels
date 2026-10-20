@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <meta name="theme-color" content="#100c19" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="ReelParty Live" />
+  <title>ReelParty · Instagram zusammen anschauen</title>
+  <link rel="icon" href="/icon.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="/style.css" />
+  <script defer src="/app.js"></script>
+</head>
+<body>
+  <div class="glow" aria-hidden="true"></div>
+  <header class="top"><div class="brand"><span class="mark">▶</span> reel<span>party</span><b>LIVE</b></div><span class="top-tag">PRIVATE WATCH PARTY</span></header>
+  <main>
+    <section id="lobby" class="lobby">
+      <div class="intro"><div class="eyebrow">LIVE · ZU VIERT · AUF DEM IPAD</div>
+        <h1>Instagram Reels.<br /><em>Gemeinsam.</em></h1>
+        <p>Ein Instagram-Browser. Vier iPads. Einer scrollt, alle schauen zu – inklusive originaler Likes und Kommentare.</p>
+        <div class="pills"><span>◉ Echter Instagram-Bildschirm</span><span>♬ Live-Bild und Ton</span><span>⌁ Einladungslink</span></div>
+      </div>
+      <div class="panel lobby-panel"><span class="eyebrow">DEINE WATCH PARTY</span><h2>Bereit für den Feed?</h2>
+        <label for="name">Dein Anzeigename</label><input id="name" maxlength="24" placeholder="Wie sollen dich Freunde nennen?" autocomplete="nickname" />
+        <button id="create" class="btn hot">Party erstellen <span>→</span></button>
+        <div class="line"><span>ODER BEITRETEN</span></div>
+        <label for="roomCode">Raumcode</label><input id="roomCode" maxlength="7" placeholder="Zum Beispiel D7QK8AF" autocapitalize="characters" />
+        <button id="join" class="btn outline">Raum beitreten</button>
+        <p class="note">Nur ein Live-Raum pro Server. Eine Anmeldung erfolgt direkt in einem von dir gesteuerten Browser auf dem Server. Dafür werden Eingaben sicher an deinen Server übertragen.</p>
+      </div>
+    </section>
+    <section id="party" class="party hidden">
+      <div class="room-head panel"><div><span class="eyebrow" id="roomBadge">LIVE SESSION</span><h2>Dein gemeinsamer Feed <span id="codeLabel"></span></h2><p id="subtitle">Verbindung wird aufgebaut …</p></div>
+        <div class="room-actions"><button id="invite" class="btn outline compact">Link teilen</button><button id="leave" class="btn subtle compact">Verlassen</button></div></div>
+      <div class="layout">
+        <div class="player-panel">
+          <div class="video-frame" id="videoFrame">
+            <video id="video" playsinline controls preload="none"></video>
+            <div id="videoCover" class="video-cover"><div class="bigplay">▶</div><h3 id="videoStatus">Noch nicht live</h3><p id="videoDescription">Der Moderator bereitet Instagram vor.</p></div>
+          </div>
+          <div class="under-video"><div class="live-indicator" id="liveStatus"><i></i> OFFLINE</div><button id="playStream" class="btn hot compact hidden">▶ Live abspielen · Ton einschalten</button></div>
+          <p class="hint">Die Übertragung kann einige Sekunden verzögert sein. Ton wird auf iPads oft erst nach einem Tippen abgespielt.</p>
+        </div>
+        <aside class="sidebar">
+          <div class="panel"><div class="section-head"><div><span class="eyebrow">WATCH PARTY</span><h3>Teilnehmer <span id="count">0/4</span></h3></div><span class="connected-dot"></span></div><div id="people" class="people"></div></div>
+          <div id="hostOnly" class="panel host-panel hidden">
+            <div class="section-head"><div><span class="eyebrow">NUR FÜR DEN MODERATOR</span><h3>Instagram fernsteuern</h3></div><span class="admin-pill">HOST</span></div>
+            <p class="helper">Tippe auf das Instagram-Bild, um Felder, Likes und Kommentare zu bedienen. Melde dich <strong>vor</strong> dem Livestart an.</p>
+            <div class="remote-frame" id="remoteFrame"><img id="remoteImage" alt="Fernansicht des Instagram-Browsers" /><div class="remote-wait" id="remoteWait">Browser startet …</div></div>
+            <div class="input-row"><input id="remoteText" type="text" placeholder="In markiertes Feld schreiben" autocomplete="off" spellcheck="false" /><button id="remoteSend" class="btn outline compact">Eingeben</button></div>
+            <div class="quick-actions"><button data-act="enter" class="btn subtle">↵ Enter</button><button data-act="back" class="btn subtle">↑ Vorheriges</button><button data-act="next" class="btn subtle">↓ Nächstes Reel</button><button data-act="reels" class="btn subtle">⌂ Reels</button></div>
+            <div class="broadcast-controls"><button id="goLive" class="btn hot">● Liveübertragung starten</button><button id="stopLive" class="btn danger hidden">■ Übertragung beenden</button></div>
+            <div class="privacy">Schalte die Übertragung aus, bevor du Passwörter, Sicherheitscodes oder private Nachrichten eingibst. Die Server-Anmeldung ist nicht dieselbe wie eine offizielle Instagram-API-Verknüpfung.</div>
+          </div>
+          <div class="panel info-panel"><h3>So funktioniert es</h3><p>Nur der Moderator steuert den gemeinsamen Instagram-Browser. Deine Freunde sehen dieselben Reels, echten Likes und Kommentare wie du.</p><p>Die Darstellung wird als Livevideo übertragen. Die Instagram-Oberfläche ist nicht bei jedem Teilnehmer separat bedienbar.</p></div>
+        </aside>
+      </div>
+    </section>
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  </main>
+  <footer>ReelParty ist ein unabhängiges experimentelles Projekt und steht in keiner Verbindung zu Instagram oder Meta.</footer>
+</body>
+</html>
