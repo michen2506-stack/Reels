@@ -1,6 +1,7 @@
 'use strict';
 const {test} = require('node:test');
 const assert = require('node:assert/strict');
+const fs = require('node:fs');
 process.env.MOCK_BROWSER = '1';
 process.env.REELPARTY_ACCESS_PASSWORD = 'ci-example-password';
 const {server,cleanupRoom} = require('./server');
@@ -32,4 +33,20 @@ test('Watch Party: up to four users, private moderator actions', async () => {
   assert.equal((await request('/api/leave','POST',{},authenticated(host.cookie))).status,200);
   assert.equal((await request('/api/state','GET',{},authenticated(guests[0].cookie))).data.active,false);
  } finally {await cleanupRoom();await new Promise(resolve=>server.close(resolve));}
+});
+
+
+test('UI: all referenced controls exist in HTML', () => {
+ const js=fs.readFileSync('app.js','utf8');
+ const html=fs.readFileSync('index.html','utf8');
+ const refs=[...js.matchAll(/\$\('([a-zA-Z][a-zA-Z0-9]*)'\)/g)].map(match=>match[1]);
+ for(const id of refs)assert.match(html,new RegExp('id="'+id+'"'), 'Missing UI element: '+id);
+});
+
+test('Video encoder: quality and robust HLS configuration', () => {
+ const serverCode=fs.readFileSync('server.js','utf8');
+ assert.match(serverCode,/'-preset','veryfast'/);
+ assert.match(serverCode,/'-crf','21'/);
+ assert.match(serverCode,/delete_segments\+independent_segments\+temp_file/);
+ assert.match(serverCode,/REELPARTY_PROFILE_DIR/);
 });
