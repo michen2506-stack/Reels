@@ -9,7 +9,7 @@ const { spawn } = require('node:child_process');
 const PORT = Number(process.env.PORT || 3000);
 const MAX_MEMBERS = 4;
 const ROOM_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-const FRAME = { width: 480, height: 900 };
+const FRAME = { width: 360, height: 640 };
 const PUBLIC = path.join(__dirname, 'public');
 const types = {'.html':'text/html; charset=utf-8','.css':'text/css; charset=utf-8','.js':'application/javascript; charset=utf-8','.svg':'image/svg+xml'};
 const safeCode = () => Array.from(crypto.randomBytes(7), x => ROOM_CHARS[x % ROOM_CHARS.length]).join('');
@@ -101,7 +101,7 @@ async function setupBrowser(r) {
     const context=await chromium.launchPersistentContext(r.profileDir,{
       headless:false,chromiumSandbox:false,viewport:FRAME,deviceScaleFactor:1,
       hasTouch:true,isMobile:true,locale:'de-DE',permissions:[],
-      args:['--no-sandbox','--disable-dev-shm-usage','--window-size=480,900',
+      args:['--no-sandbox','--disable-dev-shm-usage','--disable-background-timer-throttling','--window-size=360,640',
         '--window-position=0,0','--app=https://www.instagram.com/reels/',
         '--autoplay-policy=no-user-gesture-required','--disable-notifications']
     });
@@ -128,7 +128,7 @@ async function hostAction(data) {
   } else if(type==='scroll') {
     const amount=Number(data.amount);
     if(![-1,1].includes(amount))throw Error('Ungültige Richtung');
-    await page.mouse.wheel(0,amount*690);
+    await page.mouse.wheel(0,amount*550);
   } else if(type==='type') {
     const value=data.value;
     if(typeof value!=='string'||value.length>512)throw Error('Text zu lang');
@@ -157,14 +157,14 @@ async function startStream(r) {
   const dir=r.hlsDir;
   const ffargs=[
     '-hide_banner','-loglevel','error','-y',
-    '-thread_queue_size','512','-f','x11grab','-draw_mouse','0','-framerate','20',
-    '-video_size','480x900','-i',`${process.env.DISPLAY||':99'}.0+0,0`,
+    '-thread_queue_size','512','-f','x11grab','-draw_mouse','0','-framerate','15',
+    '-video_size','360x640','-i',`${process.env.DISPLAY||':99'}.0+0,0`,
     '-thread_queue_size','512','-f','pulse','-i','reelparty.monitor',
     '-map','0:v:0','-map','1:a:0',
     '-c:v','libx264','-preset','ultrafast','-tune','zerolatency',
-    '-pix_fmt','yuv420p','-r','20','-g','20','-b:v','850k','-maxrate','950k','-bufsize','950k',
+    '-pix_fmt','yuv420p','-r','15','-g','15','-b:v','550k','-maxrate','650k','-bufsize','650k',
     '-c:a','aac','-b:a','72k','-ar','44100','-ac','2',
-    '-f','hls','-hls_time','1','-hls_list_size','6','-hls_flags','delete_segments+independent_segments',
+    '-f','hls','-hls_time','1','-hls_list_size','3','-hls_flags','delete_segments+independent_segments',
     '-hls_segment_filename',path.join(dir,'clip%05d.ts'),path.join(dir,'live.m3u8')
   ];
   const ff=spawn('ffmpeg',ffargs,{stdio:['ignore','ignore','pipe']});
@@ -202,7 +202,7 @@ const server=http.createServer(async(req,res)=>{
       if(room.browserStatus!=='ready')return bad(res,503,'Browser startet');
       if(busyFrame)return bad(res,429,'Frame bereits angefordert');
       busyFrame=true;
-      try{const bytes=await room.page.screenshot({type:'jpeg',quality:62,timeout:6000});
+      try{const bytes=await room.page.screenshot({type:'jpeg',quality:52,timeout:4500});
         res.writeHead(200,{'Content-Type':'image/jpeg','Cache-Control':'no-store','X-Content-Type-Options':'nosniff'});res.end(bytes);
       }catch(e){bad(res,503,'Bild nicht verfügbar');}finally{busyFrame=false;}
       return;
