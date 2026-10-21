@@ -10,7 +10,7 @@
   broadcastState:$('broadcastState'), hint:$('hint'), toast:$('toast'), goLive:$('goLive'),
   stopLive:$('stopLive'), play:$('play'), typeText:$('typeText'), typeSend:$('typeSend'), reels:$('reels')
  };
- let state={active:false}; let events=null; let frameTimer=null;let lastFrame=0;
+ let state={active:false}; let events=null; let frameTimer=null;
  let previousBroadcast=false;let previewLoading=false;let toastTimer;
  const searchCode=new URL(location.href).searchParams.get('room');
  if(searchCode) els.joinCode.value=searchCode.trim().toUpperCase().slice(0,7);
@@ -37,7 +37,7 @@
  function disconnectEvents(){ if(events){events.close();events=null;} }
  function stopFrames(){if(frameTimer){clearInterval(frameTimer);frameTimer=null;}previewLoading=false;els.remote.hidden=true;els.remote.removeAttribute('src');}
  async function updateFrame(){
-  if(previewLoading||!state?.active||!state.host||state.browserStatus!=='ready')return;
+  if(previewLoading||document.hidden||!state?.active||!state.host||state.browserStatus!=='ready')return;
   previewLoading=true;
   try {
    const img=await fetch('/api/host/frame?frame='+Date.now(),{cache:'no-store',credentials:'same-origin'});
@@ -49,7 +49,7 @@
    setTimeout(()=>{if(previewLoading){previewLoading=false;URL.revokeObjectURL(source);}},5000);
   }catch{previewLoading=false;}
  }
- function startFrames(){if(frameTimer)return;updateFrame();frameTimer=setInterval(updateFrame,500);}
+ function startFrames(){if(frameTimer)return;updateFrame();frameTimer=setInterval(()=>{if(!document.hidden)updateFrame();},1000);}
  function setVideoUrl(){
   if(!state.active||state.host||!state.broadcast)return;
   const base='/hls/live.m3u8';
@@ -99,13 +99,12 @@
    els.goLive.disabled=state.browserStatus!=='ready'||state.streamStatus==='starting';
    els.goLive.textContent=state.streamStatus==='starting'?'Stream startet …':'Liveübertragung starten ▶';
    els.stopLive.hidden=!state.broadcast;
-   els.hint.textContent='Instagram öffnet sich direkt auf deinem iPad. Keine Passwortübertragung an ReelParty.';
-   els.waiting.hidden=true;
-   stopFrames();
+   els.hint.textContent='Tippe auf die Vorschau, um den gemeinsamen Browser zu bedienen. Vor dem Livestart anmelden.';
+   if(state.browserStatus==='ready'){els.waiting.hidden=true;startFrames();}else{stopFrames();setWaiting('Browser wird vorbereitet',state.message||'Bitte warten …');}
   }else{
    stopFrames();
    els.remote.hidden=true;
-   els.hint.textContent=state.broadcast?'Tippe auf „Live abspielen“, um mit den anderen zuzuschauen.':'Sobald der Moderator den Stream startet, erscheint das Video hier.';
+   els.hint.textContent=state.broadcast?'Tippe auf „Live abspielen“, um zuzuschauen.':'Sobald der Moderator den Stream startet, erscheint das Video hier.';
    els.play.disabled=!state.broadcast;
    els.viewer.hidden=!state.broadcast;
    if(state.broadcast){
