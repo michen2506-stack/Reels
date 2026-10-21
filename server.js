@@ -9,7 +9,7 @@ const { spawn } = require('node:child_process');
 const PORT = Number(process.env.PORT || 3000);
 const MAX_MEMBERS = 4;
 const ROOM_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-const FRAME = { width: 360, height: 640 };
+const FRAME = { width: 480, height: 854 };
 const PUBLIC = path.join(__dirname, 'public');
 const types = {'.html':'text/html; charset=utf-8','.css':'text/css; charset=utf-8','.js':'application/javascript; charset=utf-8','.svg':'image/svg+xml'};
 const safeCode = () => Array.from(crypto.randomBytes(7), x => ROOM_CHARS[x % ROOM_CHARS.length]).join('');
@@ -101,7 +101,7 @@ async function setupBrowser(r) {
     const context=await chromium.launchPersistentContext(r.profileDir,{
       headless:false,chromiumSandbox:false,viewport:FRAME,deviceScaleFactor:1,
       hasTouch:true,isMobile:true,locale:'de-DE',permissions:[],
-      args:['--no-sandbox','--disable-dev-shm-usage','--disable-background-timer-throttling','--window-size=360,640',
+      args:['--no-sandbox','--disable-dev-shm-usage','--disable-background-timer-throttling','--window-size=480,854',
         '--window-position=0,0','--app=https://www.instagram.com/reels/',
         '--autoplay-policy=no-user-gesture-required','--disable-notifications']
     });
@@ -157,12 +157,12 @@ async function startStream(r) {
   const dir=r.hlsDir;
   const ffargs=[
     '-hide_banner','-loglevel','error','-y',
-    '-thread_queue_size','512','-f','x11grab','-draw_mouse','0','-framerate','15',
-    '-video_size','360x640','-i',`${process.env.DISPLAY||':99'}.0+0,0`,
+    '-thread_queue_size','512','-f','x11grab','-draw_mouse','0','-framerate','30',
+    '-video_size','480x854','-i',`${process.env.DISPLAY||':99'}.0+0,0`,
     '-thread_queue_size','512','-f','pulse','-i','reelparty.monitor',
     '-map','0:v:0','-map','1:a:0',
     '-c:v','libx264','-preset','ultrafast','-tune','zerolatency',
-    '-pix_fmt','yuv420p','-r','15','-g','15','-b:v','550k','-maxrate','650k','-bufsize','650k',
+    '-pix_fmt','yuv420p','-r','30','-g','30','-b:v','1000k','-maxrate','1200k','-bufsize','1200k',
     '-c:a','aac','-b:a','72k','-ar','44100','-ac','2',
     '-f','hls','-hls_time','1','-hls_list_size','3','-hls_flags','delete_segments+independent_segments',
     '-hls_segment_filename',path.join(dir,'clip%05d.ts'),path.join(dir,'live.m3u8')
