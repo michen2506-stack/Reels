@@ -100,9 +100,8 @@
    els.goLive.textContent=state.streamStatus==='starting'?'Stream startet …':'Liveübertragung starten ▶';
    els.stopLive.hidden=!state.broadcast;
    els.hint.textContent='Instagram öffnet sich direkt auf deinem iPad. Keine Passwortübertragung an ReelParty.';
-   els.waiting.hidden=true;stopFrames();
-   else {stopFrames();setWaiting(state.browserStatus==='error'?'Browserfehler':'Instagram wird vorbereitet',
-    state.message||'Bitte etwas warten.');}
+   els.waiting.hidden=true;
+   stopFrames();
   }else{
    stopFrames();
    els.remote.hidden=true;
