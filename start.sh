@@ -1,6 +1,6 @@
 #!/bin/sh
 set -eu
-Xvfb :99 -screen 0 480x854x24 -ac -nolisten tcp -noreset >/tmp/reelparty-xvfb.log 2>&1 &
+Xvfb :99 -screen 0 360x640x24 -ac -nolisten tcp -noreset >/tmp/reelparty-xvfb.log 2>&1 &
 sleep 1
 mkdir -p "$HOME/.config/pulse"
 pulseaudio --start --exit-idle-time=-1 --log-target=stderr >/tmp/reelparty-pulse.log 2>&1 || true
