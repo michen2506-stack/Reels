@@ -41,7 +41,7 @@ function memberOf(req) {
   return room && member?.room === room ? member : null;
 }
 function sessionCookie(token) {
-  return \`rp_session=\${token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=43200\${process.env.NODE_ENV === 'production' ? '; Secure' : ''}\`;
+  return `rp_session=${token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=43200${process.env.NODE_ENV === 'production' ? '; Secure' : ''}`;
 }
 function guardRequest(req) {
   const origin = req.headers.origin;
@@ -68,7 +68,7 @@ function snapshot(member) {
     dimensions:FRAME
   };
 }
-function sse(res,type,value) { if(res.destroyed || res.writableEnded) return; try{res.write(\`event: \${type}\ndata: \${JSON.stringify(value)}\n\n\`);}catch{}}
+function sse(res,type,value) { if(res.destroyed || res.writableEnded) return; try{res.write(`event: ${type}\ndata: ${JSON.stringify(value)}\n\n`);}catch{}}
 function notify() {
   if(!room)return;
   for(const m of room.members.values()) for(const res of m.listeners) sse(res,'state',snapshot(m));
@@ -158,7 +158,7 @@ async function startStream(r) {
   const ffargs=[
     '-hide_banner','-loglevel','error','-y',
     '-thread_queue_size','512','-f','x11grab','-draw_mouse','0','-framerate','20',
-    '-video_size','480x900','-i',\`\${process.env.DISPLAY||':99'}.0+0,0\`,
+    '-video_size','480x900','-i',`${process.env.DISPLAY||':99'}.0+0,0`,
     '-thread_queue_size','512','-f','pulse','-i','reelparty.monitor',
     '-map','0:v:0','-map','1:a:0',
     '-c:v','libx264','-preset','ultrafast','-tune','zerolatency',
@@ -266,5 +266,5 @@ const server=http.createServer(async(req,res)=>{
     fs.createReadStream(file).pipe(res);
   }catch(e){if(!res.headersSent)bad(res,400,e.message.slice(0,120));else res.end();}
 });
-if(require.main===module){server.listen(PORT,'0.0.0.0',()=>console.log(\`ReelParty Live startet auf Port \${PORT}\`));}
+if(require.main===module){server.listen(PORT,'0.0.0.0',()=>console.log(`ReelParty Live startet auf Port ${PORT}`));}
 module.exports={server,cleanupRoom};
