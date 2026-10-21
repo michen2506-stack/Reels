@@ -15,6 +15,18 @@ const types = {'.html':'text/html; charset=utf-8','.css':'text/css; charset=utf-
 const safeCode = () => Array.from(crypto.randomBytes(7), x => ROOM_CHARS[x % ROOM_CHARS.length]).join('');
 const safeName = name => typeof name === 'string' ? name.trim().replace(/[<>]/g,'').slice(0,24) : '';
 const sessions = new Map();
+const accessTokens = new Map();
+const attempts = new Map();
+const ACCESS_PASSWORD = process.env.REELPARTY_ACCESS_PASSWORD || '';
+const PROFILE_DIR = process.env.REELPARTY_PROFILE_DIR || '/data/instagram-profile';
+function hasAccess(req) {
+  const token=parseCookies(req).rp_access;
+  return !!ACCESS_PASSWORD && !!token && (accessTokens.get(token)||0)>Date.now();
+}
+function passwordMatches(value) {
+  if(typeof value!=='string'||!ACCESS_PASSWORD)return false;
+  return crypto.timingSafeEqual(crypto.createHash('sha256').update(value).digest(),crypto.createHash('sha256').update(ACCESS_PASSWORD).digest());
+}
 let room = null; // Nur EIN gemeinsamer Remote-Browser pro Serverinstanz.
 let busyFrame = false;
 
@@ -86,7 +98,7 @@ async function cleanupRoom() {
   killProc(previous.encoder);
   try{await previous.context?.close();}catch{}
   try{await previous.browser?.close();}catch{}
-  try{if(previous.profileDir)fs.rmSync(previous.profileDir,{recursive:true,force:true});}catch{}
+  // Browserprofil bleibt auf dem persistenten Volume gespeichert.
   try{fs.rmSync(previous.hlsDir,{recursive:true,force:true});}catch{}
 }
 async function setupBrowser(r) {
@@ -97,7 +109,8 @@ async function setupBrowser(r) {
   }
   try {
     const {chromium} = require('playwright');
-    r.profileDir=fs.mkdtempSync(path.join(os.tmpdir(),'reelparty-profile-'));
+    fs.mkdirSync(PROFILE_DIR,{recursive:true,mode:0o700});
+    r.profileDir=PROFILE_DIR;
     const context=await chromium.launchPersistentContext(r.profileDir,{
       headless:false,chromiumSandbox:false,viewport:FRAME,deviceScaleFactor:1,
       hasTouch:true,isMobile:true,locale:'de-DE',permissions:[],
@@ -188,7 +201,31 @@ const server=http.createServer(async(req,res)=>{
   try {
     const url=new URL(req.url,'http://localhost');
     const route=url.pathname;
-    if(route==='/health')return json(res,200,{ok:true,room:!!room});
+    if(route==='/health')return json(res,200,{ok:true});
+    if(route==='/api/access/login' && req.method==='POST'){
+      if(!guardRequest(req))return bad(res,403,'Ungültiger Ursprung');
+      const ip=String(req.headers['x-forwarded-for']||req.socket.remoteAddress||'').split(',')[0];
+      const record=attempts.get(ip)||{failures:0,blockedUntil:0};
+      if(record.blockedUntil>Date.now())return bad(res,429,'Bitte in 15 Minuten erneut versuchen.');
+      const body=await readBody(req);
+      if(!passwordMatches(body.password)){
+        record.failures++;
+        if(record.failures>=5){record.failures=0;record.blockedUntil=Date.now()+900000;}
+        attempts.set(ip,record);
+        return bad(res,401,'Falsches Passwort');
+      }
+      attempts.delete(ip);
+      const token=crypto.randomBytes(32).toString('hex');
+      accessTokens.set(token,Date.now()+604800000);
+      return json(res,200,{ok:true},'rp_access='+token+'; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=604800');
+    }
+    if(!hasAccess(req)){
+      if(route==='/' && req.method==='GET'){
+        res.writeHead(200,{'Content-Type':'text/html; charset=utf-8','Cache-Control':'no-store','X-Frame-Options':'DENY'});
+        return res.end('<!doctype html><html lang="de"><meta name="viewport" content="width=device-width,initial-scale=1"><title>ReelParty Zugang</title><style>body{font:16px system-ui;background:#0c1019;color:white;display:grid;place-items:center;min-height:90vh}main{max-width:360px;width:90%}input,button{box-sizing:border-box;padding:14px;width:100%;margin:8px 0;border-radius:8px}button{background:#7c3aed;color:white;border:0}</style><main><h1>ReelParty</h1><p>Privater Zugang</p><form id="f"><input id="p" type="password" autocomplete="current-password" placeholder="ReelParty-Passwort" required><button>Anmelden</button></form><p id="msg" role="alert"></p></main><script>document.getElementById("f").onsubmit=async e=>{e.preventDefault();const r=await fetch("/api/access/login",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({password:document.getElementById("p").value})});if(r.ok)location.reload();else document.getElementById("msg").textContent=(await r.json()).error}</script>');
+      }
+      return bad(res,401,'ReelParty ist passwortgeschützt');
+    }
     if(route==='/api/state'&&req.method==='GET')return json(res,200,memberOf(req)?snapshot(memberOf(req)):{active:false,session:false});
     if(route==='/api/events'&&req.method==='GET') {
       const m=memberOf(req);if(!m)return bad(res,401,'Nicht angemeldet');
