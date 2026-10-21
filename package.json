@@ -1,10 +1,15 @@
 {
-  "name": "reelparty-ipad",
-  "version": "1.0.0",
+  "name": "reelparty-live-instagram",
+  "version": "0.1.0",
   "private": true,
-  "description": "ReelParty private rooms and chat for iPad",
+  "description": "Experimenteller privater gemeinsamer Browser für vier iPads",
+  "type": "commonjs",
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "test": "node --test"
+  },
+  "dependencies": {
+    "playwright": "1.58.2"
   },
   "engines": {
     "node": ">=20"
