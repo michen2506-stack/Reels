@@ -13,4 +13,5 @@ jobs:
         with:
           node-version: '22'
       - run: node --check server.js
+      - run: node --check app.js
       - run: npm test
