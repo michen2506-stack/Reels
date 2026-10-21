@@ -96,6 +96,7 @@ async function cleanupRoom() {
   const previous=room; room=null;
   for(const m of previous.members.values()) {sessions.delete(m.token);for(const res of m.listeners){sse(res,'closed',{});res.end();}}
   killProc(previous.encoder);
+  if(previous.encoder)await new Promise(resolve=>{if(previous.encoder.exitCode!==null)return resolve();previous.encoder.once('exit',resolve);setTimeout(resolve,1500).unref?.();});
   try{await previous.context?.close();}catch{}
   try{await previous.browser?.close();}catch{}
   // Browserprofil bleibt auf dem persistenten Volume gespeichert.
@@ -162,7 +163,7 @@ function waitUntilFile(file,timeout=18000) {
   });
 }
 async function startStream(r) {
-  if(r.broadcast || r.streamStatus==='starting') return;
+  if(room!==r || r.broadcast || r.streamStatus==='starting') return;
   if(r.browserStatus!=='ready')throw Error('Instagram-Browser noch nicht bereit');
   fs.mkdirSync(r.hlsDir,{recursive:true});
   r.streamStatus='starting';r.message='Liveübertragung wird gestartet …';notify();
@@ -174,10 +175,10 @@ async function startStream(r) {
     '-video_size','360x640','-i',`${process.env.DISPLAY||':99'}.0+0,0`,
     '-thread_queue_size','512','-f','pulse','-i','reelparty.monitor',
     '-map','0:v:0','-map','1:a:0',
-    '-c:v','libx264','-preset','ultrafast','-tune','zerolatency',
-    '-pix_fmt','yuv420p','-r','24','-g','24','-b:v','650k','-maxrate','800k','-bufsize','800k',
-    '-c:a','aac','-b:a','72k','-ar','44100','-ac','2',
-    '-f','hls','-hls_time','1','-hls_list_size','3','-hls_flags','delete_segments+independent_segments',
+    '-c:v','libx264','-preset','veryfast','-tune','zerolatency',
+    '-pix_fmt','yuv420p','-r','24','-g','48','-crf','21','-maxrate','2500k','-bufsize','5000k',
+    '-c:a','aac','-b:a','128k','-ar','48000','-ac','2',
+    '-f','hls','-hls_time','2','-hls_list_size','5','-hls_flags','delete_segments+independent_segments+temp_file',
     '-hls_segment_filename',path.join(dir,'clip%05d.ts'),path.join(dir,'live.m3u8')
   ];
   const ff=spawn('ffmpeg',ffargs,{stdio:['ignore','ignore','pipe']});
@@ -187,13 +188,14 @@ async function startStream(r) {
   ff.on('error',err=>{ if(room===r){r.streamStatus='error';r.message=err.message;notify();}});
   ff.on('exit',()=>{if(room===r && r.encoder===ff){r.encoder=null;r.broadcast=false;r.streamStatus='error';r.message='Streaming gestoppt. '+diagnostic.slice(-180);notify();}});
   const ready=await waitUntilFile(path.join(dir,'live.m3u8'));
-  if(room!==r)return;
-  if(!ready) {killProc(ff);r.streamStatus='error';r.message='Kein Videostream verfügbar. Bitte Log und Audio-Konfiguration prüfen. '+diagnostic.slice(-180);notify();return;}
+  if(room!==r){killProc(ff);return;}
+  if(!ready || r.encoder!==ff || r.streamStatus!=='starting') {killProc(ff);r.streamStatus='error';r.message='Kein Videostream verfügbar. Bitte Log und Audio-Konfiguration prüfen. '+diagnostic.slice(-180);notify();return;}
   r.broadcast=true;r.streamStatus='live';r.message='Live! Alle verbundenen iPads sehen dieselbe Instagram-Ansicht.';notify();
 }
 async function stopStream(r) {
   r.broadcast=false;r.streamStatus='off';r.message='Übertragung beendet';
   const encoder=r.encoder;r.encoder=null;killProc(encoder);
+  if(encoder)await new Promise(resolve=>{if(encoder.exitCode!==null)return resolve();encoder.once('exit',resolve);setTimeout(resolve,1500).unref?.();});
   try{fs.rmSync(r.hlsDir,{recursive:true,force:true});}catch{}
   notify();
 }
@@ -247,7 +249,7 @@ const server=http.createServer(async(req,res)=>{
     if(route.startsWith('/hls/')&&req.method==='GET') {
       const m=memberOf(req);if(!m||!room.broadcast)return bad(res,403,'Kein Zugriff');
       const filename=route.slice('/hls/'.length);
-      if(!/^live\.m3u8$|^clip\d{5,8}\.ts$/.test(filename))return bad(res,404,'Nicht gefunden');
+      if(!/^(?:live\.m3u8|clip\d{5,8}\.ts)$/.test(filename))return bad(res,404,'Nicht gefunden');
       const full=path.join(room.hlsDir,filename);
       if(!fs.existsSync(full))return bad(res,404,'Stream wird vorbereitet');
       res.writeHead(200,{'Content-Type':filename.endsWith('.m3u8')?'application/vnd.apple.mpegurl':'video/mp2t',
