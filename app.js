@@ -99,9 +99,8 @@
    els.goLive.disabled=state.browserStatus!=='ready'||state.streamStatus==='starting';
    els.goLive.textContent=state.streamStatus==='starting'?'Stream startet …':'Liveübertragung starten ▶';
    els.stopLive.hidden=!state.broadcast;
-   els.hint.textContent=state.broadcast?'Der Instagram-Bildschirm wird jetzt live übertragen.':
-     'Diese Browser-Vorschau ist nur für dich sichtbar. Bitte erst anmelden, dann Live starten.';
-   if(state.browserStatus==='ready'){els.waiting.hidden=true;startFrames();}
+   els.hint.textContent='Instagram öffnet sich direkt auf deinem iPad. Keine Passwortübertragung an ReelParty.';
+   els.waiting.hidden=true;stopFrames();
    else {stopFrames();setWaiting(state.browserStatus==='error'?'Browserfehler':'Instagram wird vorbereitet',
     state.message||'Bitte etwas warten.');}
   }else{
