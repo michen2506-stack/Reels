@@ -101,7 +101,7 @@
    els.stopLive.hidden=!state.broadcast;
    els.hint.textContent=state.broadcast?'Der Instagram-Bildschirm wird jetzt live übertragen.':
      'Diese Browser-Vorschau ist nur für dich sichtbar. Bitte erst anmelden, dann Live starten.';
-   if(state.browserStatus==='ready')startFrames();
+   if(state.browserStatus==='ready'){els.waiting.hidden=true;startFrames();}
    else {stopFrames();setWaiting(state.browserStatus==='error'?'Browserfehler':'Instagram wird vorbereitet',
     state.message||'Bitte etwas warten.');}
   }else{
