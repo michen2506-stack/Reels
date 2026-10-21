@@ -14,7 +14,7 @@
  <span id="connection" class="status">Bereit</span>
 </header>
 <section id="home" class="home">
- <div class="hero"><span class="eyebrow">PRIVATE WATCH PARTY · MAX. 4 PERSONEN</span><h1>Reels zusammen.<br><em>Auf allen iPads.</em></h1><p>Ein gemeinsamer Instagram-Browser für eure Gruppe. Nur der Moderator steuert, die anderen schauen live zu.</p></div>
+ <div class="hero"><span class="eyebrow">PRIVATE WATCH PARTY · MAX. 4 PERSONEN</span><h1>Reels zusammen.<br><em>Auf allen iPads.</em></h1><p>Privater Raum für bis zu vier iPads. Instagram öffnet sich sicher direkt auf deinem Gerät.</p></div>
  <div class="setup">
  <label for="name">Dein Anzeigename</label><input id="name" maxlength="24" autocomplete="nickname" placeholder="z. B. Alex">
  <button class="main-button" id="create">Neue Party starten <span>→</span></button>
@@ -34,23 +34,17 @@
      <video id="viewer" playsinline controls preload="none" hidden></video>
      <div id="waiting" class="waiting"><div class="loading-shape">◉</div><strong>Instagram wird vorbereitet</strong><p>Das kann beim ersten Start etwas dauern.</p></div>
    </div>
-   <p id="hint" class="helper">Der Moderator sieht den Browser zunächst privat.</p>
+   <p id="hint" class="helper">Eine automatische Instagram-Bildschirmübertragung ist in Safari nicht verfügbar.</p>
   </section>
   <section id="moderator" class="panel" hidden>
-   <h2>Browser-Steuerung</h2><p class="muted">Tippe direkt ins Bild, um Instagram zu bedienen. Die Vorschau bleibt privat, bis du den Stream startest.</p>
-   <div class="grid-controls"><button data-scroll="-1" class="control">↑ Vorheriges Reel</button><button data-scroll="1" class="control">↓ Nächstes Reel</button></div>
-   <div class="remote-entry"><label for="typeText">Text in ausgewähltes Instagram-Feld</label><div class="horizontal"><input id="typeText" type="text" placeholder="Eingabe..." autocomplete="off"><button id="typeSend" class="secondary">Eingeben</button></div></div>
-   <div class="grid-controls"><button data-key="Tab" class="control">Tab</button><button data-key="Enter" class="control">Enter</button><button data-key="Backspace" class="control">⌫</button><button data-key="Escape" class="control">Esc</button></div>
-   <button id="reels" class="secondary fill">Instagram-Reels öffnen</button>
-   <div class="privacy"><b>Privater Login:</b> Melde dich zuerst an. Erst danach auf „Live starten“ tippen. Eingaben laufen über deinen Server.</div>
-   <button id="goLive" class="main-button">Liveübertragung starten ▶</button>
-   <button id="stopLive" class="danger fill" hidden>Liveübertragung stoppen ■</button>
+    <h2>Instagram auf deinem iPad</h2>
+    <p>Melde dich ausschließlich direkt bei Instagram an. ReelParty fragt niemals nach deinem Instagram-Passwort.</p>
+    <a class="external-link" href="https://www.instagram.com/reels/" target="_blank" rel="noopener noreferrer">Instagram Reels öffnen ↗</a>
+    <div class="privacy"><b>Wichtig:</b> Safari kann den Bildschirm der Instagram-App nicht automatisch an deine Freunde übertragen. Eine echte gemeinsame Liveansicht benötigt eine native iPad-App mit Bildschirmfreigabe. Diese Webversion bietet vorerst den privaten Raum.</div>
   </section>
   <section id="viewerPanel" class="panel" hidden>
-   <h2>Gemeinsam zuschauen</h2>
-   <p>Du siehst, was der Moderator im gemeinsamen Instagram-Browser öffnet.</p>
-   <button id="play" class="main-button" disabled>Live abspielen ▶</button>
-   <p class="muted">Das Video kann einige Sekunden verzögert ankommen. Originale Likes und Kommentare erscheinen im übertragenen Bildschirm.</p>
+    <h2>Warten auf gemeinsame Wiedergabe</h2>
+    <p>Der Raum funktioniert. Eine sichere Liveübertragung der Instagram-App ist in Safari allein nicht möglich.</p>
   </section>
   <section class="panel members-panel"><h2>Im Raum <span id="memberCount">1/4</span></h2><div id="memberList"></div><p class="muted">Nur der Moderator kann den Instagram-Browser bedienen. Euer Raumcode gilt, solange der Moderator online ist.</p></section>
  </div>
