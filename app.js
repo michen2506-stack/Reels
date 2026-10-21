@@ -49,7 +49,7 @@
    setTimeout(()=>{if(previewLoading){previewLoading=false;URL.revokeObjectURL(source);}},5000);
   }catch{previewLoading=false;}
  }
- function startFrames(){if(frameTimer)return;updateFrame();frameTimer=setInterval(updateFrame,1000);}
+ function startFrames(){if(frameTimer)return;updateFrame();frameTimer=setInterval(updateFrame,500);}
  function setVideoUrl(){
   if(!state.active||state.host||!state.broadcast)return;
   const base='/hls/live.m3u8';
@@ -172,7 +172,7 @@
   try{await send('tap',{x,y});setTimeout(updateFrame,200);}catch{}
  });
  document.querySelectorAll('[data-scroll]').forEach(btn=>{
-  btn.addEventListener('click',async()=>{try{await send('scroll',{amount:Number(btn.dataset.scroll)});setTimeout(updateFrame,250);}catch{}});
+  btn.addEventListener('click',async()=>{try{await send('scroll',{amount:Number(btn.dataset.scroll)});setTimeout(updateFrame,180);}catch{}});
  });
  document.querySelectorAll('[data-key]').forEach(btn=>{
   btn.addEventListener('click',async()=>{try{await send('key',{key:btn.dataset.key});setTimeout(updateFrame,100);}catch{}});
