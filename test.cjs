@@ -30,6 +30,10 @@ test('Watch Party: up to four users, private moderator actions', async () => {
   assert.equal((await request('/api/host/action','POST',{type:'scroll',amount:1},authenticated(guests[0].cookie))).status,403);
   assert.equal((await request('/api/host/action','POST',{type:'scroll',amount:1},authenticated(host.cookie))).status,200);
   assert.equal((await request('/api/host/action','POST',{type:'tap',x:9999,y:2},authenticated(host.cookie))).status,400);
+  assert.equal((await request('/api/host/action','POST',{type:'tap',x:180,y:320},authenticated(host.cookie))).status,200);
+  assert.equal((await request('/api/host/action','POST',{type:'login'},authenticated(host.cookie))).status,200);
+  assert.equal((await request('/api/host/action','POST',{type:'submitLogin'},authenticated(host.cookie))).status,200);
+  assert.equal((await request('/api/host/action','POST',{type:'submitLogin'},authenticated(guests[0].cookie))).status,403);
   assert.equal((await request('/api/leave','POST',{},authenticated(host.cookie))).status,200);
   assert.equal((await request('/api/state','GET',{},authenticated(guests[0].cookie))).data.active,false);
  } finally {await cleanupRoom();await new Promise(resolve=>server.close(resolve));}
@@ -49,4 +53,15 @@ test('Video encoder: quality and robust HLS configuration', () => {
  assert.match(serverCode,/'-crf','21'/);
  assert.match(serverCode,/delete_segments\+independent_segments\+temp_file/);
  assert.match(serverCode,/REELPARTY_PROFILE_DIR/);
+});
+
+
+test('Instagram login: touch input and direct form submit controls are wired', () => {
+ const serverCode=fs.readFileSync('server.js','utf8');
+ const clientCode=fs.readFileSync('app.js','utf8');
+ assert.match(serverCode,/page\.touchscreen\.tap\(x,y\)/);
+ assert.match(serverCode,/form:has\(input\[type="password"\]\)/);
+ assert.match(serverCode,/submit\.click\(\{timeout:7000\}\)/);
+ assert.match(clientCode,/renderedWidth=imageWidth\*scale/);
+ assert.match(clientCode,/send\('submitLogin'\)/);
 });
