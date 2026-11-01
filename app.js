@@ -8,7 +8,8 @@
   invite:$('invite'), leave:$('leave'), moderator:$('moderator'), viewerPanel:$('viewerPanel'),
   remote:$('remote'), viewer:$('viewer'), waiting:$('waiting'), browserState:$('browserState'),
   broadcastState:$('broadcastState'), hint:$('hint'), toast:$('toast'), goLive:$('goLive'),
-  stopLive:$('stopLive'), play:$('play'), typeText:$('typeText'), typeSend:$('typeSend'), reels:$('reels')
+  stopLive:$('stopLive'), play:$('play'), typeText:$('typeText'), typeSend:$('typeSend'), reels:$('reels'),
+  instagramLogin:$('instagramLogin'),submitLogin:$('submitLogin'),hideInput:$('hideInput')
  };
  let state={active:false}; let events=null; let frameTimer=null;
  let previousBroadcast=false;let previewLoading=false;let toastTimer;
@@ -163,10 +164,18 @@
  els.remote.addEventListener('click',async e=>{
   if(!state.host||state.browserStatus!=='ready')return;
   const rect=els.remote.getBoundingClientRect();
-  const dims=state.dimensions||{width:480,height:900};
-  const x=Math.round((e.clientX-rect.left)/rect.width*dims.width);
-  const y=Math.round((e.clientY-rect.top)/rect.height*dims.height);
-  try{await send('tap',{x,y});setTimeout(updateFrame,200);}catch{}
+  const dims=state.dimensions||{width:360,height:640};
+  // object-fit:contain can create letterboxing. Only the visible image is clickable.
+  const imageWidth=els.remote.naturalWidth||dims.width;
+  const imageHeight=els.remote.naturalHeight||dims.height;
+  const scale=Math.min(rect.width/imageWidth,rect.height/imageHeight);
+  const renderedWidth=imageWidth*scale,renderedHeight=imageHeight*scale;
+  const left=(rect.width-renderedWidth)/2,top=(rect.height-renderedHeight)/2;
+  const localX=e.clientX-rect.left-left,localY=e.clientY-rect.top-top;
+  if(localX<0||localY<0||localX>=renderedWidth||localY>=renderedHeight)return;
+  const x=Math.max(0,Math.min(dims.width-1,Math.round(localX/renderedWidth*dims.width)));
+  const y=Math.max(0,Math.min(dims.height-1,Math.round(localY/renderedHeight*dims.height)));
+  try{await send('tap',{x,y});setTimeout(updateFrame,250);}catch{}
  });
  document.querySelectorAll('[data-scroll]').forEach(btn=>{
   btn.addEventListener('click',async()=>{try{await send('scroll',{amount:Number(btn.dataset.scroll)});setTimeout(updateFrame,180);}catch{}});
@@ -179,6 +188,22 @@
  });
  els.typeText.addEventListener('keydown',e=>{if(e.key==='Enter')els.typeSend.click();});
  els.reels.addEventListener('click',async()=>{try{await send('reels');toast('Reels-Seite geöffnet.');}catch{}});
+ els.instagramLogin.addEventListener('click',async()=>{
+  els.instagramLogin.disabled=true;
+  try{await send('login');toast('Instagram-Anmeldeseite geöffnet.');setTimeout(updateFrame,450);}
+  catch{}finally{els.instagramLogin.disabled=false;}
+ });
+ els.submitLogin.addEventListener('click',async()=>{
+  els.submitLogin.disabled=true;
+  try{await send('submitLogin');toast('Anmeldeversuch abgesendet. Prüfe die Instagram-Vorschau.');setTimeout(updateFrame,600);}
+  catch{}finally{els.submitLogin.disabled=false;}
+ });
+ els.hideInput.addEventListener('click',()=>{
+  const masked=els.typeText.type!=='password';
+  els.typeText.type=masked?'password':'text';
+  els.hideInput.textContent=masked?'Anzeigen':'Verdecken';
+  els.hideInput.setAttribute('aria-pressed',String(masked));
+ });
  els.goLive.addEventListener('click',async()=>{
   if(!confirm('Jetzt den Instagram-Bildschirm an alle Teilnehmer übertragen? Prüfe vorher, dass dein Passwort nicht sichtbar ist.'))return;
   try{await api('host/start',{});toast('Streaming wird gestartet …');}catch(e){toast(e.message);}
