@@ -105,7 +105,7 @@ async function cleanupRoom() {
 async function setupBrowser(r) {
   r.browserStatus='starting'; notify();
   if(process.env.MOCK_BROWSER === '1') {
-    r.browserStatus='ready'; r.page={ screenshot:async()=>Buffer.from('fake-image'), mouse:{click:async()=>{},wheel:async()=>{}}, keyboard:{press:async()=>{},insertText:async()=>{}},locator:()=>({fill:async()=>{}}),goto:async()=>{} };
+    r.browserStatus='ready'; r.page={ screenshot:async()=>Buffer.from('fake-image'), mouse:{click:async()=>{},wheel:async()=>{}},touchscreen:{tap:async()=>{}},keyboard:{press:async()=>{},insertText:async()=>{}},url:()=> 'https://www.instagram.com/reels/',locator:()=>({count:async()=>1,first(){return this;},locator(){return this;},isEnabled:async()=>true,click:async()=>{},press:async()=>{}}),goto:async()=>{} };
     notify(); return;
   }
   try {
@@ -138,7 +138,8 @@ async function hostAction(data) {
   if(type==='tap') {
     const x=Number(data.x),y=Number(data.y);
     if(!Number.isFinite(x)||!Number.isFinite(y)||x<0||x>FRAME.width||y<0||y>FRAME.height)throw Error('Ungültige Koordinaten');
-    await page.mouse.click(x,y);
+    if(page.touchscreen?.tap)await page.touchscreen.tap(x,y);
+    else await page.mouse.click(x,y);
   } else if(type==='scroll') {
     const amount=Number(data.amount);
     if(![-1,1].includes(amount))throw Error('Ungültige Richtung');
@@ -150,8 +151,21 @@ async function hostAction(data) {
   } else if(type==='key') {
     if(!['Enter','Tab','Backspace','Escape'].includes(data.key)) throw Error('Taste nicht erlaubt');
     await page.keyboard.press(data.key);
-  } else if(type==='reels') {
-    await page.goto('https://www.instagram.com/reels/',{waitUntil:'domcontentloaded',timeout:25000});
+  } else if(type==='reels' || type==='login') {
+    const destination=type==='login'?'https://www.instagram.com/accounts/login/':'https://www.instagram.com/reels/';
+    await page.goto(destination,{waitUntil:'domcontentloaded',timeout:25000});
+  } else if(type==='submitLogin') {
+    const current=new URL(page.url());
+    if(!['instagram.com','www.instagram.com'].includes(current.hostname))throw Error('Anmeldung nur auf Instagram möglich');
+    const form=page.locator('form:has(input[type="password"])').first();
+    if(!await form.count())throw Error('Kein Instagram-Anmeldeformular sichtbar. Öffne zuerst „Instagram-Login“.');
+    const submit=form.locator('button[type="submit"], input[type="submit"]').first();
+    if(await submit.count()) {
+      if(!await submit.isEnabled())throw Error('Instagram hat die Anmeldung noch nicht freigegeben. Prüfe Benutzername und Passwort.');
+      await submit.click({timeout:7000});
+    } else {
+      await form.locator('input[type="password"]').press('Enter');
+    }
   } else throw Error('Aktion nicht erlaubt');
 }
 function waitUntilFile(file,timeout=18000) {
@@ -165,6 +179,13 @@ function waitUntilFile(file,timeout=18000) {
 async function startStream(r) {
   if(room!==r || r.broadcast || r.streamStatus==='starting') return;
   if(r.browserStatus!=='ready')throw Error('Instagram-Browser noch nicht bereit');
+  if(process.env.MOCK_BROWSER!=='1') {
+    const currentUrl=r.page?.url()||'';
+    if(/instagram\.com\/accounts\/(?:login|password|onetap)/i.test(currentUrl) ||
+       await r.page.locator('input[type="password"]:visible').count()) {
+      throw Error('Bitte Instagram-Anmeldung abschließen, bevor du die Übertragung startest.');
+    }
+  }
   fs.mkdirSync(r.hlsDir,{recursive:true});
   r.streamStatus='starting';r.message='Liveübertragung wird gestartet …';notify();
   if(process.env.MOCK_BROWSER === '1') {r.streamStatus='mock';r.message='Testmodus: keine echte Videoaufnahme';notify();return;}
